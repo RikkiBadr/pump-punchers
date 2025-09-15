@@ -225,19 +225,32 @@
     setInterval(()=>fighterEls.forEach(wander),1600);
 
     function spar(){
-      if(fighterEls.length<2)return;
-      const i=Math.floor(Math.random()*fighterEls.length);
-      let j=Math.floor(Math.random()*fighterEls.length);
-      if(j===i)j=(j+1)%fighterEls.length;
-      const a=fighterEls[i], b=fighterEls[j];
-      a.classList.add('punch');b.classList.add('punch');
-      setTimeout(()=>{a.classList.remove('punch');b.classList.remove('punch')},380);
-      if(Math.random()<0.5){
-        a.classList.add('ko');setTimeout(()=>a.classList.remove('ko'),1200);
-      }else{
-        b.classList.add('ko');setTimeout(()=>b.classList.remove('ko'),1200);
-      }
-    }
+  if (fighterEls.length < 2) return;
+  const i = Math.floor(Math.random() * fighterEls.length);
+  let j = Math.floor(Math.random() * fighterEls.length);
+  if (j === i) j = (j + 1) % fighterEls.length;
+
+  const a = fighterEls[i], b = fighterEls[j];
+
+  // add punch effect
+  a.classList.add('punch');
+  b.classList.add('punch');
+
+  setTimeout(() => {
+    a.classList.remove('punch');
+    b.classList.remove('punch');
+  }, 600);
+
+  // randomly KO one
+  if (Math.random() < 0.5) {
+    a.classList.add('ko');
+    setTimeout(() => a.classList.remove('ko'), 1500);
+  } else {
+    b.classList.add('ko');
+    setTimeout(() => b.classList.remove('ko'), 1500);
+  }
+}
+
 
     document.getElementById('spar').onclick=spar;
     document.getElementById('spawn').onclick=()=>{
