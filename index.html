@@ -5,252 +5,284 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pump Punchers (PPUNCH)</title>
   <style>
+    :root{ --panel-w: 300px; } /* leaderboard width */
+    *{ box-sizing: border-box; }
+    html, body { height: 100%; }
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
       background: #0f0f0f;
       color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
       overflow: hidden;
     }
-    #arena {
-      position: relative;
+
+    /* Fixed leaderboard pinned to far right */
+    #leaderboard {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: var(--panel-w);
+      background: #000a;
+      border-left: 2px solid #222;
+      padding: 16px;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: row;
-      gap: 20px;
-      height: 90vh;
-      max-width: 100vw;
+      flex-direction: column;
+      z-index: 50;
+    }
+    #leaderboard h2 {
+      text-align: center;
+      border-bottom: 2px solid gold;
+      padding-bottom: 8px;
+      margin: 8px 0 12px 0;
+    }
+    #topList { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; }
+    #topList li { margin: 8px 0; }
+    #leaderboard-footer { text-align: center; font-size: 13px; font-style: italic; color: #aaa; }
+
+    /* Stage leaves space for leaderboard on the right */
+    #stage {
+      position: relative;
+      width: calc(100vw - var(--panel-w));
+      height: 100vh;
+      padding: 24px 24px 48px 24px;
+    }
+
+    /* Arena frame centered in stage */
+    #arenaFrame {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(90vh, calc(100vw - var(--panel-w) - 80px));
+      height: min(90vh, calc(100vw - var(--panel-w) - 80px));
+      max-width: 1000px; max-height: 1000px;
+    }
+
+    /* Crowd panels (left/right) */
+    .crowd {
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 9%;
+      pointer-events: none;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,.5));
+      opacity: .9;
+      z-index: 1;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255,255,255,.22), rgba(255,255,255,0) 40%),
+        repeating-linear-gradient(#222 0 8px, #1a1a1a 8px 16px);
+      border-left: 1px solid #0006;
+      border-right: 1px solid #0006;
+    }
+    .crowd.left  { left: 0;  border-top-left-radius: 16px;  border-bottom-left-radius: 16px; }
+    .crowd.right { right: 0; border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
+
+    /* Ring in the center of the frame */
+    #ringWrap {
+      position: absolute; inset: 0; margin: auto;
+      width: 82%; height: 82%;
+      z-index: 5;
     }
     #ring {
       position: relative;
+      width: 100%; height: 100%;
       background: #101010 url('ring.png') center/contain no-repeat;
-      aspect-ratio: 1 / 1;
-      max-height: 90vh;
-      max-width: 90vh;
-      width: 90vh;
-      height: 90vh;
       overflow: hidden;
     }
     #ring::before {
       content: "";
       position: absolute;
-      inset: 0;
-      margin: auto;
-      width: 60%;
-      height: 60%;
+      inset: 0; margin: auto;
+      width: 60%; height: 60%;
       background: url('logo.png') center/contain no-repeat;
-      opacity: 0.95;
-      z-index: 0;
-      pointer-events: none;
+      opacity: .95; pointer-events: none; z-index: 0;
     }
+
+    /* Quotes below ring */
+    #arena-quotes {
+      position: absolute;
+      left: 0; right: 0; bottom: -32px;
+      text-align: center;
+      font-size: 14px; color: #ccc; font-style: italic;
+      text-shadow: 0 2px 4px #000;
+      z-index: 10;
+    }
+
+    /* Fighters */
     .fighter {
       position: absolute;
-      width: 90px;
-      height: 140px;
+      width: 90px; height: 140px;
       transform-origin: 50% 100%;
       filter: drop-shadow(0 6px 8px rgba(0,0,0,.6));
       animation: idleBob 2.2s ease-in-out infinite;
       z-index: 10;
     }
     .label {
-      position: absolute;
-      left: 50%;
-      top: -16px;
-      transform: translateX(-50%);
-      font-size: 12px;
-      background: rgba(0,0,0,.55);
-      padding: 2px 6px;
-      border-radius: 6px;
-      border: 1px solid #fff3;
-      white-space: nowrap;
+      position: absolute; left: 50%; top: -16px; transform: translateX(-50%);
+      font-size: 12px; background: rgba(0,0,0,.55); padding: 2px 6px;
+      border-radius: 6px; border: 1px solid #fff3; white-space: nowrap;
     }
-    @keyframes idleBob { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-6px);} }
-    @keyframes punchAnim {
-      0%   { transform: translateY(0) scale(1); }
-      25%  { transform: translateX(-10px) scale(1.05); }
-      50%  { transform: translateX(10px) scale(1.05); }
-      75%  { transform: translateX(-6px) scale(1.02); }
-      100% { transform: translateX(0) scale(1); }
-    }
-    @keyframes koAnim {
-      0%   { transform: rotate(0deg) translateY(0); opacity: 1; }
-      50%  { transform: rotate(90deg) translateY(40px); opacity: 0.7; }
-      100% { transform: rotate(90deg) translateY(80px); opacity: 0.3; }
-    }
-    .fighter.punch { animation: punchAnim 0.5s ease-in-out; }
-    .fighter.ko { animation: koAnim 1.2s ease-out forwards; }
-    #leaderboard {
-      background: #000a;
-      padding: 16px;
-      border-left: 2px solid #222;
-      height: 90vh;
-      width: 260px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    #leaderboard h2 {
-      text-align: center;
-      border-bottom: 2px solid gold;
-      padding-bottom: 8px;
-      margin-top: 0;
-    }
-    #topList { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; }
-    #topList li { margin: 8px 0; }
-    #leaderboard-footer { text-align: center; font-size: 13px; font-style: italic; color: #aaa; }
-    #arena-quotes {
-      position: absolute;
-      bottom: 8px;
-      left: 0;
-      right: 260px;
-      text-align: center;
-      font-size: 14px;
-      color: #ccc;
-      line-height: 1.4;
-      font-style: italic;
-      text-shadow: 0 2px 4px #000;
-    }
+
+    /* Animations */
+    @keyframes idleBob { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-6px) } }
+    @keyframes punchAnim { 0%{ transform: translateX(0) } 25%{ transform: translateX(-10px) } 50%{ transform: translateX(10px) } 100%{ transform: translateX(0) } }
+    @keyframes koAnim { 0%{ transform: rotate(0deg) translateY(0); opacity: 1 } 50%{ transform: rotate(90deg) translateY(40px); opacity: .7 } 100%{ transform: rotate(90deg) translateY(80px); opacity: .3 } }
+    .punching { animation: punchAnim .5s ease-in-out; }
+    .knocked { animation: koAnim 1.2s ease-out forwards; }
+
+    /* Controls */
     .controls {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 20;
-      display: flex;
-      gap: 8px;
+      position: absolute; top: -44px; left: 8px; z-index: 20; display: flex; gap: 8px;
     }
-    .btn {
-      background: #161616;
-      border: 1px solid #2a2a2a;
-      color: #fff;
-      padding: 8px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .btn:hover { background: #1f1f1f; }
-    @media (max-width: 900px) {
-      #arena { flex-direction: column; height: auto; }
-      #ring { width: 80vw; height: 80vw; }
-      #leaderboard { width: 100%; height: auto; border-left: none; border-top: 2px solid #222; }
-      #arena-quotes { right: 0; bottom: -40px; }
+    .btn { background:#161616;border:1px solid #2a2a2a;color:#fff;padding:8px 10px;border-radius:8px;cursor:pointer }
+    .btn:hover { background:#1f1f1f }
+
+    @media (max-width: 900px){
+      :root{ --panel-w: 100vw; }
+      #leaderboard{ height: 40vh; width: 100vw; top: auto; }
+      #stage{ width: 100vw; height: calc(100vh - 40vh); }
+      #arenaFrame{ width: min(90vw, 90vh); height: min(90vw, 90vh); }
+      .controls{ top: 8px; }
+      #arena-quotes{ bottom: -24px; }
     }
   </style>
 </head>
 <body>
-  <div id="arena">
-    <div id="ring"></div>
-    <aside id="leaderboard">
-      <div>
-        <h2>Top Holders</h2>
-        <ol id="topList">
-          <li>🥇 Wallet1...xyz — 100,000</li>
-          <li>🥈 Wallet2...abc — 85,000</li>
-          <li>🥉 Wallet3...def — 70,000</li>
-          <li>4. Wallet4...qwe — 50,000</li>
-          <li>5. Wallet5...rty — 40,000</li>
-        </ol>
+  <div id="stage">
+    <div id="arenaFrame">
+      <div class="controls">
+        <button class="btn" id="spawn">Spawn Demo Fighter</button>
+        <button class="btn" id="spar">Make Them Spar</button>
       </div>
-      <div id="leaderboard-footer">"Improving every hour"</div>
-    </aside>
-    <div id="arena-quotes">
-      "Big Dev with Huge Dreams"<br/>
-      "Published on Pump.fun network"
-    </div>
-    <div class="controls">
-      <button class="btn" id="spawn">Spawn Demo Fighter</button>
-      <button class="btn" id="spar">Make Them Spar</button>
+
+      <div class="crowd left"></div>
+      <div class="crowd right"></div>
+
+      <div id="ringWrap">
+        <div id="ring"></div>
+        <div id="arena-quotes">"Big Dev with Huge Dreams" • "Published on Pump.fun network"</div>
+      </div>
     </div>
   </div>
+
+  <aside id="leaderboard">
+    <div>
+      <h2>Top Holders</h2>
+      <ol id="topList">
+        <li>🥇 Wallet1...xyz — 100,000</li>
+        <li>🥈 Wallet2...abc — 85,000</li>
+        <li>🥉 Wallet3...def — 70,000</li>
+        <li>4. Wallet4...qwe — 50,000</li>
+        <li>5. Wallet5...rty — 40,000</li>
+      </ol>
+    </div>
+    <div id="leaderboard-footer">"Improving every hour"</div>
+  </aside>
+
   <script>
-    const ring = document.getElementById("ring");
+    const ring = document.getElementById('ring');
     const ringRect = () => ring.getBoundingClientRect();
-    // Boxer SVG with random outfits
-    function boxerSVG({shorts, gloves, skin}) {
-      return `
-      <svg width="90" height="120" viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="45" cy="114" rx="26" ry="6" fill="rgba(0,0,0,.35)"/>
-        <rect x="33" y="46" width="24" height="34" rx="6" fill="${skin}" stroke="#000" stroke-opacity=".35"/>
-        <rect x="30" y="72" width="30" height="20" rx="4" fill="${shorts}" stroke="#000" stroke-opacity=".35"/>
-        <rect x="32" y="92" width="8" height="20" rx="4" fill="${skin}"/>
-        <rect x="50" y="92" width="8" height="20" rx="4" fill="${skin}"/>
-        <rect x="30" y="110" width="12" height="6" rx="2" fill="#333"/>
-        <rect x="48" y="110" width="12" height="6" rx="2" fill="#333"/>
-        <circle cx="45" cy="28" r="14" fill="${skin}" stroke="#000" stroke-opacity=".35"/>
-        <rect x="20" y="52" width="14" height="10" rx="4" fill="${skin}"/>
-        <rect x="56" y="52" width="14" height="10" rx="4" fill="${skin}"/>
-        <circle cx="18" cy="57" r="8" fill="${gloves}" stroke="#000" stroke-opacity=".4"/>
-        <circle cx="72" cy="57" r="8" fill="${gloves}" stroke="#000" stroke-opacity=".4"/>
-      </svg>`;
-    }
-    function randomColor(){
-      const colors=["#e11","#15f","#1a3","#fb0","#a0f","#0af","#ff5722","#4caf50","#9c27b0"];
-      return colors[Math.floor(Math.random()*colors.length)];
-    }
-    function randomSkin(){
-      const skins=["#f2c49b","#e0ac69","#d1a075","#f1c27d","#c68642"];
-      return skins[Math.floor(Math.random()*skins.length)];
-    }
-    const demoFighters = [
-      { name:"Wallet1...xyz" },
-      { name:"Wallet2...abc" },
-      { name:"Wallet3...def" }
-    ];
     const fighterEls = [];
-    function spawnFighter(f) {
-      const el = document.createElement("div");
-      el.className = "fighter";
+
+    // Helper randoms
+    function randItem(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function randomColor(){ return randItem(["#e11","#15f","#1a3","#fb0","#a0f","#0af","#ff5722","#4caf50","#9c27b0"]); }
+    function randomSkin(){ return randItem(["#f2c49b","#e0ac69","#d1a075","#f1c27d","#c68642"]); }
+
+    function boxerSVG({shorts, gloves, skin}){
+      return `
+        <svg width="90" height="120" viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="45" cy="114" rx="26" ry="6" fill="rgba(0,0,0,.35)"/>
+          <rect x="33" y="46" width="24" height="34" rx="6" fill="${skin}" stroke="#000" stroke-opacity=".35"/>
+          <rect x="30" y="72" width="30" height="20" rx="4" fill="${shorts}" stroke="#000" stroke-opacity=".35"/>
+          <rect x="32" y="92" width="8" height="20" rx="4" fill="${skin}"/>
+          <rect x="50" y="92" width="8" height="20" rx="4" fill="${skin}"/>
+          <rect x="30" y="110" width="12" height="6" rx="2" fill="#333"/>
+          <rect x="48" y="110" width="12" height="6" rx="2" fill="#333"/>
+          <circle cx="45" cy="28" r="14" fill="${skin}" stroke="#000" stroke-opacity=".35"/>
+          <rect x="20" y="52" width="14" height="10" rx="4" fill="${skin}"/>
+          <rect x="56" y="52" width="14" height="10" rx="4" fill="${skin}"/>
+          <circle cx="18" cy="57" r="8" fill="${gloves}" stroke="#000" stroke-opacity=".4"/>
+          <circle cx="72" cy="57" r="8" fill="${gloves}" stroke="#000" stroke-opacity=".4"/>
+        </svg>`;
+    }
+
+    function spawnFighter(name){
+      const el = document.createElement('div');
+      el.className = 'fighter';
       const r = ringRect();
-      const marginX = r.width * 0.20;
-      const marginY = r.height * 0.20;
-      el.style.left = (marginX + Math.random()*(r.width-marginX*2-90))+"px";
-      el.style.top  = (marginY + Math.random()*(r.height-marginY*2-140))+"px";
-      const shorts = randomColor(), gloves = randomColor(), skin=randomSkin();
-      el.innerHTML = boxerSVG({shorts,gloves,skin});
-      const label = document.createElement("div");
-      label.className = "label";
-      label.textContent = f.name;
+      const marginX = r.width * 0.18;
+      const marginY = r.height * 0.18;
+      const x = marginX + Math.random()*(r.width - marginX*2 - 90);
+      const y = marginY + Math.random()*(r.height - marginY*2 - 140);
+      el.style.left = x + 'px';
+      el.style.top  = y + 'px';
+      el.innerHTML = boxerSVG({shorts:randomColor(), gloves:randomColor(), skin:randomSkin()});
+
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = name;
       el.appendChild(label);
+
       ring.appendChild(el);
       fighterEls.push(el);
       return el;
     }
-    demoFighters.forEach(spawnFighter);
+
+    // Initial crowd of fighters
+    ["Wallet1...xyz","Wallet2...abc","Wallet3...def"].forEach(spawnFighter);
+
     function wander(el){
       const r = ringRect();
-      const marginX = r.width*0.20;
-      const marginY = r.height*0.20;
-      const maxX = r.width - marginX - 90;
-      const maxY = r.height - marginY - 140;
+      const marginX = r.width * 0.18, marginY = r.height * 0.18;
+      const maxX = r.width - marginX - 90, maxY = r.height - marginY - 140;
       const nx = Math.max(marginX, Math.min(maxX, (parseInt(el.style.left)||0) + (Math.random()*120-60)));
       const ny = Math.max(marginY, Math.min(maxY, (parseInt(el.style.top)||0) + (Math.random()*80-40)));
-      el.style.transition = "left .8s ease, top .8s ease";
-      el.style.left = nx+"px"; el.style.top = ny+"px";
+      el.style.transition = 'left .8s ease, top .8s ease';
+      el.style.left = nx + 'px'; el.style.top = ny + 'px';
     }
-    setInterval(()=>fighterEls.forEach(wander),1600);
+    setInterval(()=>fighterEls.forEach(wander), 1600);
+
+    // Fighting logic: pick two nearest, bring them together, punch & KO
     function spar(){
       if (fighterEls.length < 2) return;
-      const i = Math.floor(Math.random()*fighterEls.length);
-      let j = Math.floor(Math.random()*fighterEls.length);
-      if (j===i) j = (j+1)%fighterEls.length;
-      const a = fighterEls[i], b = fighterEls[j];
-      a.classList.add("punch"); b.classList.add("punch");
-      setTimeout(()=>{a.classList.remove("punch");b.classList.remove("punch")},600);
-      if (Math.random()<0.5){
-        a.classList.add("ko");setTimeout(()=>a.classList.remove("ko"),1500);
-      } else {
-        b.classList.add("ko");setTimeout(()=>b.classList.remove("ko"),1500);
-      }
-    }
-    document.getElementById("spar").onclick = spar;
-    document.getElementById("spawn").onclick = ()=>{
-      spawnFighter({
-        name:`Wallet${fighterEls.length+1}...${Math.random().toString(36).slice(2,5)}`
+      // pick random a, then nearest b
+      const idx = Math.floor(Math.random()*fighterEls.length);
+      const a = fighterEls[idx];
+      let nearest = null, best = 1e9;
+      const ax = parseInt(a.style.left), ay = parseInt(a.style.top);
+      fighterEls.forEach((el, i)=>{
+        if (i===idx) return;
+        const dx = ax - parseInt(el.style.left);
+        const dy = ay - parseInt(el.style.top);
+        const d = dx*dx + dy*dy;
+        if (d < best){ best = d; nearest = el; }
       });
-    };
+      const b = nearest || fighterEls[(idx+1)%fighterEls.length];
+
+      // mid point
+      const mx = (parseInt(a.style.left) + parseInt(b.style.left))/2;
+      const my = (parseInt(a.style.top) + parseInt(b.style.top))/2;
+
+      a.style.transition = b.style.transition = 'left .4s ease, top .4s ease';
+      a.style.left = (mx - 60) + 'px'; a.style.top = my + 'px';
+      b.style.left = (mx + 10) + 'px'; b.style.top = my + 'px';
+
+      // add punch effect
+      setTimeout(()=>{
+        a.classList.add('punching');
+        b.classList.add('punching');
+        setTimeout(()=>{ a.classList.remove('punching'); b.classList.remove('punching'); }, 520);
+
+        // randomly KO one
+        const loser = Math.random() < 0.5 ? a : b;
+        loser.classList.add('knocked');
+        setTimeout(()=> loser.classList.remove('knocked'), 1400);
+      }, 420);
+    }
+
+    // Controls & auto spar
+    document.getElementById('spar').onclick = spar;
+    document.getElementById('spawn').onclick = ()=> spawnFighter(`Wallet${fighterEls.length+1}...${Math.random().toString(36).slice(2,5)}`);
+    setInterval(spar, 4500);
+    window.addEventListener('resize', ()=> fighterEls.forEach(wander));
   </script>
 </body>
 </html>
