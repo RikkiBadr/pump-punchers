@@ -204,8 +204,8 @@
   const marginX = r.width * 0.20;
   const marginY = r.height * 0.20;
 
-  const maxX = r.width - marginX - 100;
-  const maxY = r.height - marginY - 140;
+  const maxX = r.width - marginX - 80;
+  const maxY = r.height - marginY - 120;
 
   const nx = Math.max(marginX, Math.min(maxX, (parseInt(el.style.left)||0) + (Math.random()*120-60)));
   const ny = Math.max(marginY, Math.min(maxY, (parseInt(el.style.top)||0) + (Math.random()*80-40)));
@@ -238,8 +238,8 @@
       const nf=spawnFighter({
         name:`Wallet${fighterEls.length+1}...${Math.random().toString(36).slice(2,5)}`,
         color:['#e11','#15f','#1a3','#fb0','#a0f','#0af'][fighterEls.length%6],
-        x:marginX+Math.random()*(r.width-marginX*2-100),
-        y:marginY+Math.random()*(r.height-marginY*2-140)
+        x:marginX+Math.random()*(r.width-marginX*2-80),
+        y:marginY+Math.random()*(r.height-marginY*2-120)
       });
       fighterEls.push(nf);
     };
