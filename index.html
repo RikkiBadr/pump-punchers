@@ -202,16 +202,23 @@ html = r"""<!DOCTYPE html>
 
     const fighterEls = demoFighters.map(spawnFighter);
 
-    function wander(el){
-      const r = ringRect();
-      const maxX = r.width - 120;
-      const maxY = r.height - 180;
-      const nx = Math.max(20, Math.min(maxX, (parseInt(el.style.left)||0) + (Math.random()*120-60)));
-      const ny = Math.max(60, Math.min(maxY, (parseInt(el.style.top)||0) + (Math.random()*80-40)));
-      el.style.transition = 'transform .8s ease, left .8s ease, top .8s ease';
-      el.style.left = nx + 'px';
-      el.style.top  = ny + 'px';
-    }
+function wander(el){
+  const r = ringRect();
+  // shrink the movement area (leave margin for ropes)
+  const marginX = r.width * 0.12;  // 12% from left/right
+  const marginY = r.height * 0.12; // 12% from top/bottom
+
+  const maxX = r.width - marginX - 100;
+  const maxY = r.height - marginY - 140;
+
+  const nx = Math.max(marginX, Math.min(maxX, (parseInt(el.style.left)||0) + (Math.random()*120-60)));
+  const ny = Math.max(marginY, Math.min(maxY, (parseInt(el.style.top)||0) + (Math.random()*80-40)));
+
+  el.style.transition = 'transform .8s ease, left .8s ease, top .8s ease';
+  el.style.left = nx + 'px';
+  el.style.top  = ny + 'px';
+}
+
     setInterval(()=> fighterEls.forEach(wander), 1600);
 
     function spar(){
