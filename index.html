@@ -240,16 +240,19 @@ function wander(el){
     }
 
     document.getElementById('spar').onclick = spar;
-    document.getElementById('spawn').onclick = ()=>{
-      const idx = fighterEls.length+1;
-      const nf = spawnFighter({
-        name:`Wallet${idx}...${Math.random().toString(36).slice(2,5)}`,
-        color: ['#e11','#15f','#1a3','#fb0','#a0f','#0af'][idx%6],
-        x: 120 + Math.random()* (ringRect().width-240),
-        y: 200 + Math.random()* 120
-      });
-      fighterEls.push(nf);
-    };
+document.getElementById('spawn').onclick = ()=>{
+  const r = ringRect();
+  const marginX = r.width * 0.12;
+  const marginY = r.height * 0.12;
+  const nf = spawnFighter({
+    name:`Wallet${fighterEls.length+1}...${Math.random().toString(36).slice(2,5)}`,
+    color: ['#e11','#15f','#1a3','#fb0','#a0f','#0af'][fighterEls.length%6],
+    x: marginX + Math.random()*(r.width - marginX*2 - 100),
+    y: marginY + Math.random()*(r.height - marginY*2 - 140)
+  });
+  fighterEls.push(nf);
+};
+
 
     window.addEventListener('resize', ()=> fighterEls.forEach(wander));
   </script>
