@@ -78,8 +78,20 @@
     }
 
     @keyframes idleBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes punchAnim {
+  0%   { transform: scale(1) }
+  30%  { transform: scale(1.1) translateX(-6px) }
+  60%  { transform: scale(1.1) translateX(6px) }
+  100% { transform: scale(1) }
+}
     @keyframes enterAnim{0%{transform:translateY(-300px) scale(0.5);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
-    @keyframes koAnim{0%{transform:rotate(0)}40%{transform:rotate(80deg) translateY(40px);opacity:1}100%{transform:rotate(90deg) translateY(80px);opacity:.5}}
+    @keyframes koAnim {
+  0%   { transform: rotate(0deg) translateY(0); opacity: 1; }
+  50%  { transform: rotate(90deg) translateY(40px); opacity: 0.7; }
+  100% { transform: rotate(90deg) translateY(80px); opacity: 0.3; }
+}
+.fighter.punch { animation: punchAnim 0.4s ease-in-out; }
+.fighter.ko    { animation: koAnim 1s ease forwards; }
 
     .controls{position:fixed;left:12px;bottom:12px;z-index:18;display:flex;gap:8px}
     .btn{background:#161616;border:1px solid #2a2a2a;color:#fff;
@@ -175,14 +187,22 @@
     const fighterEls = demoFighters.map(spawnFighter);
 
     function wander(el){
-      const r=ringRect();
-      const marginX=r.width*0.12, marginY=r.height*0.12;
-      const maxX=r.width-marginX-100, maxY=r.height-marginY-140;
-      const nx=Math.max(marginX,Math.min(maxX,(parseInt(el.style.left)||0)+(Math.random()*120-60)));
-      const ny=Math.max(marginY,Math.min(maxY,(parseInt(el.style.top)||0)+(Math.random()*80-40)));
-      el.style.transition='left .8s ease, top .8s ease';
-      el.style.left=nx+'px';el.style.top=ny+'px';
-    }
+  const r = ringRect();
+  // Leave a clear margin inside the ring (20% of width/height)
+  const marginX = r.width * 0.20;
+  const marginY = r.height * 0.20;
+
+  const maxX = r.width - marginX - 100;
+  const maxY = r.height - marginY - 140;
+
+  const nx = Math.max(marginX, Math.min(maxX, (parseInt(el.style.left)||0) + (Math.random()*120-60)));
+  const ny = Math.max(marginY, Math.min(maxY, (parseInt(el.style.top)||0) + (Math.random()*80-40)));
+
+  el.style.transition = 'left .8s ease, top .8s ease';
+  el.style.left = nx + 'px';
+  el.style.top  = ny + 'px';
+}
+
     setInterval(()=>fighterEls.forEach(wander),1600);
 
     function spar(){
