@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pump Punchers (PPUNCH)</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    header {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    header img {
+      height: 60px;
+    }
+
+    header h1 {
+      font-size: 24px;
+      margin: 0;
+    }
+
+    /* Main ring area */
+    #ring {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 75%;
+      height: 100%;
+      background: url('https://i.ibb.co/QYXX6YB/boxing-ring-bg.jpg') center/cover no-repeat;
+      overflow: hidden;
+    }
+
+    /* Leaderboard */
+    #leaderboard {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 25%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #leaderboard h2 {
+      margin-top: 0;
+      text-align: center;
+      font-size: 22px;
+      border-bottom: 2px solid gold;
+      padding-bottom: 10px;
+    }
+
+    #leaderboard ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    #leaderboard li {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    /* Fighters */
+    .fighter {
+      position: absolute;
+      width: 60px;
+      height: 120px;
+      text-align: center;
+      animation: bounce 3s infinite;
+    }
+
+    .fighter .avatar {
+      width: 60px;
+      height: 100px;
+      background: red;
+      border: 3px solid white;
+      border-radius: 5px;
+      margin: 0 auto;
+    }
+
+    .fighter .name {
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    /* Animation */
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="logo.png" alt="Pump Punchers Logo" />
+    <h1>Pump Punchers (PPUNCH)</h1>
+  </header>
+
+  <div id="ring"></div>
+
+  <div id="leaderboard">
+    <h2>Top Holders</h2>
+    <ol id="topList">
+      <li>🥇 Wallet1...xyz — 100,000</li>
+      <li>🥈 Wallet2...abc — 85,000</li>
+      <li>🥉 Wallet3...def — 70,000</li>
+      <li>4. Wallet4...qwe — 50,000</li>
+      <li>5. Wallet5...rty — 40,000</li>
+    </ol>
+  </div>
+
+  <script>
+    // Demo fighters (later: replace with real wallet data)
+    const fighters = [
+      { name: "Wallet1...xyz", color: "red", x: 150, y: 250 },
+      { name: "Wallet2...abc", color: "blue", x: 300, y: 280 },
+      { name: "Wallet3...def", color: "green", x: 450, y: 260 },
+    ];
+
+    const ring = document.getElementById("ring");
+
+    fighters.forEach(f => {
+      let div = document.createElement("div");
+      div.className = "fighter";
+      div.style.left = f.x + "px";
+      div.style.top = f.y + "px";
+
+      let avatar = document.createElement("div");
+      avatar.className = "avatar";
+      avatar.style.background = f.color;
+
+      let name = document.createElement("div");
+      name.className = "name";
+      name.innerText = f.name;
+
+      div.appendChild(avatar);
+      div.appendChild(name);
+      ring.appendChild(div);
+    });
+  </script>
+</body>
+</html>
