@@ -56,28 +56,63 @@
       max-width: 1000px; max-height: 1000px;
     }
 
-    /* Crowd panels (left/right) */
+    /* Animated Crowd Panels (left/right) */
     .crowd {
       position: absolute;
       top: 0; bottom: 0;
-      width: 9%;
+      width: 11%;
       pointer-events: none;
-      filter: drop-shadow(0 10px 20px rgba(0,0,0,.5));
-      opacity: .9;
-      z-index: 1;
+      z-index: 2;
+      /* subtle dark stands backdrop */
       background:
-        radial-gradient(circle at 50% -10%, rgba(255,255,255,.22), rgba(255,255,255,0) 40%),
-        repeating-linear-gradient(#222 0 8px, #1a1a1a 8px 16px);
+        radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.07), rgba(255,255,255,0) 45%),
+        repeating-linear-gradient(#1b1b1b 0 10px, #151515 10px 20px);
       border-left: 1px solid #0006;
       border-right: 1px solid #0006;
+      box-shadow: inset 0 0 40px rgba(0,0,0,.7);
+      overflow: hidden;
     }
     .crowd.left  { left: 0;  border-top-left-radius: 16px;  border-bottom-left-radius: 16px; }
     .crowd.right { right: 0; border-top-right-radius: 16px; border-bottom-right-radius: 16px; }
 
+    /* Individual animated fans */
+    .fan {
+      position: absolute;
+      width: 22px;
+      height: 36px;
+      transform-origin: 50% 100%;
+      filter: drop-shadow(0 2px 2px rgba(0,0,0,.5));
+      opacity: .9;
+    }
+    .head {
+      width: 16px; height: 16px; border-radius: 50%;
+      margin: 0 auto 2px auto;
+      background: #f2c49b;
+    }
+    .body {
+      width: 100%; height: 18px; border-radius: 6px;
+      background: #444;
+    }
+    .arm {
+      position: absolute; top: 14px; width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #f2c49b;
+    }
+    .arm.left  { left: -2px; }
+    .arm.right { right: -2px; }
+
+    /* Cheer animations */
+    @keyframes crowdBob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-4px) } }
+    @keyframes waveLeft  { 0%,100%{ transform: rotate(0deg)} 50%{ transform: rotate(-25deg)} }
+    @keyframes waveRight { 0%,100%{ transform: rotate(0deg)} 50%{ transform: rotate(25deg)} }
+    .fan { animation: crowdBob 1.8s ease-in-out infinite; }
+    .fan .arm.left  { transform-origin: 100% 50%; animation: waveLeft 1.8s ease-in-out infinite; }
+    .fan .arm.right { transform-origin: 0% 50%;   animation: waveRight 1.8s ease-in-out infinite; }
+
     /* Ring in the center of the frame */
     #ringWrap {
       position: absolute; inset: 0; margin: auto;
-      width: 82%; height: 82%;
+      width: 78%; height: 78%;
       z-index: 5;
     }
     #ring {
@@ -120,7 +155,7 @@
       border-radius: 6px; border: 1px solid #fff3; white-space: nowrap;
     }
 
-    /* Animations */
+    /* Fight animations */
     @keyframes idleBob { 0%,100%{ transform: translateY(0) } 50%{ transform: translateY(-6px) } }
     @keyframes punchAnim { 0%{ transform: translateX(0) } 25%{ transform: translateX(-10px) } 50%{ transform: translateX(10px) } 100%{ transform: translateX(0) } }
     @keyframes koAnim { 0%{ transform: rotate(0deg) translateY(0); opacity: 1 } 50%{ transform: rotate(90deg) translateY(40px); opacity: .7 } 100%{ transform: rotate(90deg) translateY(80px); opacity: .3 } }
@@ -139,6 +174,7 @@
       #leaderboard{ height: 40vh; width: 100vw; top: auto; }
       #stage{ width: 100vw; height: calc(100vh - 40vh); }
       #arenaFrame{ width: min(90vw, 90vh); height: min(90vw, 90vh); }
+      .crowd{ display:none; } /* hide crowds on small screens for space */
       .controls{ top: 8px; }
       #arena-quotes{ bottom: -24px; }
     }
@@ -152,8 +188,8 @@
         <button class="btn" id="spar">Make Them Spar</button>
       </div>
 
-      <div class="crowd left"></div>
-      <div class="crowd right"></div>
+      <div class="crowd left" id="crowdLeft"></div>
+      <div class="crowd right" id="crowdRight"></div>
 
       <div id="ringWrap">
         <div id="ring"></div>
@@ -178,13 +214,57 @@
 
   <script>
     const ring = document.getElementById('ring');
-    const ringRect = () => ring.getBoundingClientRect();
+    const crowdLeft = document.getElementById('crowdLeft');
+    const crowdRight = document.getElementById('crowdRight');
     const fighterEls = [];
 
     // Helper randoms
-    function randItem(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-    function randomColor(){ return randItem(["#e11","#15f","#1a3","#fb0","#a0f","#0af","#ff5722","#4caf50","#9c27b0"]); }
-    function randomSkin(){ return randItem(["#f2c49b","#e0ac69","#d1a075","#f1c27d","#c68642"]); }
+    const rand = (a,b)=> Math.random()*(b-a)+a;
+    const randInt = (a,b)=> Math.floor(rand(a,b));
+    const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+    const SKINS = ["#f2c49b","#e0ac69","#d1a075","#f1c27d","#c68642"];
+    const SHIRTS = ["#ff5252","#448aff","#4caf50","#ffb300","#ab47bc","#00bcd4","#9e9e9e"];
+
+    // Build animated crowd on a side
+    function buildCrowd(container, side='left'){
+      container.innerHTML = '';
+      const W = container.clientWidth;
+      const H = container.clientHeight;
+      const cols = Math.max(4, Math.floor(W/28));
+      const rows = Math.max(10, Math.floor(H/34));
+      const xGap = W / (cols+1);
+      const yGap = H / (rows+1);
+      let idx = 0;
+      for(let r=0; r<rows; r++){
+        for(let c=0; c<cols; c++){
+          const fan = document.createElement('div');
+          fan.className = 'fan';
+          fan.style.left = (c*xGap + rand(-4,4) + xGap*0.4) + 'px';
+          fan.style.top  = (r*yGap + rand(-3,3) + yGap*0.4) + 'px';
+          fan.style.animationDelay = (idx%cols)*0.08 + 's';
+
+          const head = document.createElement('div'); head.className = 'head'; head.style.background = pick(SKINS);
+          const body = document.createElement('div'); body.className = 'body'; body.style.background = pick(SHIRTS);
+          const armL = document.createElement('div'); armL.className = 'arm left';
+          const armR = document.createElement('div'); armR.className = 'arm right';
+
+          fan.appendChild(head); fan.appendChild(body); fan.appendChild(armL); fan.appendChild(armR);
+          container.appendChild(fan);
+          idx++;
+        }
+      }
+    }
+
+    // Build crowds initially and on resize
+    function rebuildCrowds(){
+      buildCrowd(crowdLeft, 'left');
+      buildCrowd(crowdRight, 'right');
+    }
+    window.addEventListener('resize', rebuildCrowds);
+    setTimeout(rebuildCrowds, 0);
+
+    // Fighters
+    const ringRect = () => ring.getBoundingClientRect();
 
     function boxerSVG({shorts, gloves, skin}){
       return `
@@ -214,7 +294,7 @@
       const y = marginY + Math.random()*(r.height - marginY*2 - 140);
       el.style.left = x + 'px';
       el.style.top  = y + 'px';
-      el.innerHTML = boxerSVG({shorts:randomColor(), gloves:randomColor(), skin:randomSkin()});
+      el.innerHTML = boxerSVG({shorts:pick(SHIRTS), gloves:pick(SHIRTS), skin:pick(SKINS)});
 
       const label = document.createElement('div');
       label.className = 'label';
@@ -226,7 +306,6 @@
       return el;
     }
 
-    // Initial crowd of fighters
     ["Wallet1...xyz","Wallet2...abc","Wallet3...def"].forEach(spawnFighter);
 
     function wander(el){
@@ -240,12 +319,13 @@
     }
     setInterval(()=>fighterEls.forEach(wander), 1600);
 
-    // Fighting logic: pick two nearest, bring them together, punch & KO
+    // Fighting logic
     function spar(){
       if (fighterEls.length < 2) return;
-      // pick random a, then nearest b
+      // pick random fighter a
       const idx = Math.floor(Math.random()*fighterEls.length);
       const a = fighterEls[idx];
+      // find nearest b
       let nearest = null, best = 1e9;
       const ax = parseInt(a.style.left), ay = parseInt(a.style.top);
       fighterEls.forEach((el, i)=>{
@@ -257,32 +337,29 @@
       });
       const b = nearest || fighterEls[(idx+1)%fighterEls.length];
 
-      // mid point
       const mx = (parseInt(a.style.left) + parseInt(b.style.left))/2;
       const my = (parseInt(a.style.top) + parseInt(b.style.top))/2;
 
-      a.style.transition = b.style.transition = 'left .4s ease, top .4s ease';
+      a.style.transition = b.style.transition = 'left .35s ease, top .35s ease';
       a.style.left = (mx - 60) + 'px'; a.style.top = my + 'px';
       b.style.left = (mx + 10) + 'px'; b.style.top = my + 'px';
 
-      // add punch effect
       setTimeout(()=>{
         a.classList.add('punching');
         b.classList.add('punching');
         setTimeout(()=>{ a.classList.remove('punching'); b.classList.remove('punching'); }, 520);
 
-        // randomly KO one
         const loser = Math.random() < 0.5 ? a : b;
         loser.classList.add('knocked');
         setTimeout(()=> loser.classList.remove('knocked'), 1400);
-      }, 420);
+      }, 380);
     }
 
     // Controls & auto spar
     document.getElementById('spar').onclick = spar;
     document.getElementById('spawn').onclick = ()=> spawnFighter(`Wallet${fighterEls.length+1}...${Math.random().toString(36).slice(2,5)}`);
-    setInterval(spar, 4500);
-    window.addEventListener('resize', ()=> fighterEls.forEach(wander));
+    setInterval(spar, 4200);
+    window.addEventListener('resize', ()=>{ fighterEls.forEach(wander); rebuildCrowds(); });
   </script>
 </body>
 </html>
