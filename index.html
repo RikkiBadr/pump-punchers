@@ -202,12 +202,7 @@
     <div>
       <h2>Top Holders</h2>
       <ol id="topList">
-        <li>🥇 Wallet1...xyz — 100,000</li>
-        <li>🥈 Wallet2...abc — 85,000</li>
-        <li>🥉 Wallet3...def — 70,000</li>
-        <li>4. Wallet4...qwe — 50,000</li>
-        <li>5. Wallet5...rty — 40,000</li>
-      </ol>
+  
     </div>
     <div id="leaderboard-footer">"Improving every hour"</div>
   </aside>
@@ -361,5 +356,39 @@
     setInterval(spar, 4200);
     window.addEventListener('resize', ()=>{ fighterEls.forEach(wander); rebuildCrowds(); });
   </script>
+  <script>
+const MINT_ADDRESS = "YOUR_PPUNCH_MINT";   // Replace with your real mint
+const API_KEY = "YOUR_HELIUS_API_KEY";     // get free key from https://helius.dev
+const API_URL = `https://api.helius.xyz/v0/token-holders?api-key=${API_KEY}&mint=${MINT_ADDRESS}`;
+
+async function loadLeaderboard() {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+
+    // Sort by balance (highest first)
+    const sorted = data.sort((a, b) => Number(b.amount) - Number(a.amount));
+
+    // Top 20 only
+    const top20 = sorted.slice(0, 20);
+
+    // Render into leaderboard
+    const list = document.getElementById("topList");
+    list.innerHTML = "";
+    top20.forEach((holder, i) => {
+      const li = document.createElement("li");
+      li.textContent = `${i+1}. ${holder.owner.slice(0,4)}...${holder.owner.slice(-4)} — ${holder.amount}`;
+      list.appendChild(li);
+    });
+  } catch (e) {
+    console.error("Error loading leaderboard:", e);
+  }
+}
+
+// Load when page starts + refresh every 60 sec
+loadLeaderboard();
+setInterval(loadLeaderboard, 60000);
+</script>
+
 </body>
 </html>
