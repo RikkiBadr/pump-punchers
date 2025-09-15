@@ -2,116 +2,106 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pump Punchers (PPUNCH)</title>
   <style>
-    body {
-      margin: 0;
-      background: #111;
-      color: white;
-      font-family: Arial, sans-serif;
-      overflow: hidden;
+    :root{
+      --panel-w: 25vw;
     }
-
-    header {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      z-index: 10;
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Arial, Helvetica, sans-serif;
+      background:#0f0f0f;
+      color:#fff;
+      overflow:hidden;
     }
-
-    header img {
-      height: 60px;
+    header{
+      position:fixed;
+      top:10px;left:12px;
+      z-index:10;
+      display:flex;align-items:center;gap:10px;
+      text-shadow:0 2px 10px rgba(0,0,0,.6);
     }
-
-    header h1 {
-      font-size: 24px;
-      margin: 0;
+    header img{height:56px}
+    header h1{margin:0;font-size:22px}
+    /* Main ring */
+    #ring{
+      position:fixed;
+      inset:0 auto 0 0;
+      width:calc(100vw - var(--panel-w));
+      background:url('ring.png') center/cover no-repeat, #101010;
+      overflow:hidden;
     }
-
-    /* Main ring area */
-    #ring {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 75%;
-      height: 100%;
-      background: url('ring.png') center/cover no-repeat;
-      overflow: hidden;
+    /* Right panel */
+    #leaderboard{
+      position:fixed;
+      top:0;right:0;bottom:0;
+      width:var(--panel-w);
+      background:#000a;
+      padding:18px 16px;
+      border-left:1px solid #222;
+      backdrop-filter: blur(2px);
     }
-
-    /* Leaderboard */
-    #leaderboard {
-      position: absolute;
-      right: 0;
-      top: 0;
-      width: 25%;
-      height: 100%;
-      background: rgba(0,0,0,0.8);
-      padding: 20px;
-      box-sizing: border-box;
+    #leaderboard h2{
+      margin:6px 0 12px;
+      text-align:center;
+      border-bottom:2px solid gold;
+      padding-bottom:6px;
     }
-
-    #leaderboard h2 {
-      margin-top: 0;
-      text-align: center;
-      font-size: 22px;
-      border-bottom: 2px solid gold;
-      padding-bottom: 10px;
+    #topList{list-style:none;padding:0;margin:0}
+    #topList li{margin:10px 0}
+    /* Fighter container */
+    .fighter{
+      position:absolute;
+      width:90px;
+      height:140px;
+      transform-origin:50% 100%;
+      filter: drop-shadow(0 6px 8px rgba(0,0,0,.6));
+      animation: idleBob 2.2s ease-in-out infinite;
     }
-
-    #leaderboard ol {
-      margin: 0;
-      padding: 0;
-      list-style: none;
+    .label{
+      position:absolute;
+      left:50%;top:-16px;transform:translateX(-50%);
+      font-size:12px;background:rgba(0,0,0,.55);
+      padding:2px 6px;border-radius:6px;border:1px solid #fff3;
+      white-space:nowrap;
     }
-
-    #leaderboard li {
-      margin: 10px 0;
-      font-size: 16px;
+    /* Simple punch animation (applied by JS when two fighters clash) */
+    .punch{
+      animation: punchAnim .35s ease-in-out;
     }
-
-    /* Fighters */
-    .fighter {
-      position: absolute;
-      width: 60px;
-      height: 120px;
-      text-align: center;
-      animation: bounce 3s infinite;
+    @keyframes idleBob{
+      0%,100%{ transform: translateY(0) }
+      50%{ transform: translateY(-6px) }
     }
-
-    .fighter .avatar {
-      width: 60px;
-      height: 100px;
-      background: red;
-      border: 3px solid white;
-      border-radius: 5px;
-      margin: 0 auto;
+    @keyframes punchAnim{
+      0%{ transform: translateY(-6px) scale(1) rotate(0) }
+      40%{ transform: translateY(-10px) scale(1.04) rotate(-2deg) }
+      70%{ transform: translateY(-6px) scale(1) rotate(0) }
+      100%{ transform: translateY(0) }
     }
-
-    .fighter .name {
-      font-size: 12px;
-      margin-top: 3px;
+    /* Helper controls (you can remove later) */
+    .controls{
+      position:fixed;left:12px;bottom:12px;z-index:10;
+      display:flex;gap:8px;flex-wrap:wrap
     }
-
-    /* Animation */
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-20px); }
+    .btn{
+      background:#161616;border:1px solid #2a2a2a;color:#fff;
+      padding:8px 10px;border-radius:8px;cursor:pointer
     }
+    .btn:hover{background:#1f1f1f}
   </style>
 </head>
 <body>
   <header>
-    <img src="logo.png" alt="Pump Punchers Logo" />
+    <img src="logo.png" alt="Pump Punchers Logo">
     <h1>Pump Punchers (PPUNCH)</h1>
   </header>
 
   <div id="ring"></div>
 
-  <div id="leaderboard">
+  <aside id="leaderboard">
     <h2>Top Holders</h2>
     <ol id="topList">
       <li>🥇 Wallet1...xyz — 100,000</li>
@@ -120,36 +110,124 @@
       <li>4. Wallet4...qwe — 50,000</li>
       <li>5. Wallet5...rty — 40,000</li>
     </ol>
+  </aside>
+
+  <div class="controls">
+    <button class="btn" id="spawn">Spawn Demo Fighter</button>
+    <button class="btn" id="spar">Make Them Spar</button>
   </div>
 
   <script>
-    // Demo fighters (later: replace with real wallet data)
-    const fighters = [
-      { name: "Wallet1...xyz", color: "red", x: 150, y: 250 },
-      { name: "Wallet2...abc", color: "blue", x: 300, y: 280 },
-      { name: "Wallet3...def", color: "green", x: 450, y: 260 },
+    // --- Boxer SVG factory --------------------------------------------------
+    function boxerSVG({shorts='#e11', gloves='#e11', skin='#f2c49b', accent='#fff'}){
+      // Returns a tiny inline SVG boxer (head, body, shorts, gloves).
+      return `
+      <svg width="90" height="120" viewBox="0 0 90 120" xmlns="http://www.w3.org/2000/svg">
+        <!-- shadow mat -->
+        <ellipse cx="45" cy="114" rx="26" ry="6" fill="rgba(0,0,0,.35)"/>
+        <!-- body -->
+        <rect x="33" y="46" width="24" height="34" rx="6" fill="${skin}" stroke="#000" stroke-opacity=".35"/>
+        <!-- shorts -->
+        <rect x="30" y="72" width="30" height="20" rx="4" fill="${shorts}" stroke="#000" stroke-opacity=".35"/>
+        <rect x="30" y="72" width="30" height="6" fill="${accent}" opacity=".2"/>
+        <!-- legs -->
+        <rect x="32" y="92" width="8" height="20" rx="4" fill="${skin}"/>
+        <rect x="50" y="92" width="8" height="20" rx="4" fill="${skin}"/>
+        <!-- shoes -->
+        <rect x="30" y="110" width="12" height="6" rx="2" fill="#333"/>
+        <rect x="48" y="110" width="12" height="6" rx="2" fill="#333"/>
+        <!-- head -->
+        <circle cx="45" cy="28" r="14" fill="${skin}" stroke="#000" stroke-opacity=".35"/>
+        <path d="M36 30 q9 6 18 0" stroke="#000" stroke-opacity=".35" fill="none"/>
+        <!-- arms -->
+        <rect x="20" y="52" width="14" height="10" rx="4" fill="${skin}"/>
+        <rect x="56" y="52" width="14" height="10" rx="4" fill="${skin}"/>
+        <!-- gloves -->
+        <circle cx="18" cy="57" r="8" fill="${gloves}" stroke="#000" stroke-opacity=".4"/>
+        <circle cx="72" cy="57" r="8" fill="${gloves}" stroke="#000" stroke-opacity=".4"/>
+      </svg>`;
+    }
+
+    // --- Demo fighters data -------------------------------------------------
+    const demoFighters = [
+      { name: "Wallet1...xyz", color: "#e11", x: 140, y: 240 },
+      { name: "Wallet2...abc", color: "#15f", x: 320, y: 260 },
+      { name: "Wallet3...def", color: "#1a3", x: 520, y: 250 }
     ];
 
-    const ring = document.getElementById("ring");
+    const ring = document.getElementById('ring');
+    const ringRect = () => ring.getBoundingClientRect();
 
-    fighters.forEach(f => {
-      let div = document.createElement("div");
-      div.className = "fighter";
-      div.style.left = f.x + "px";
-      div.style.top = f.y + "px";
+    function spawnFighter(f){
+      const el = document.createElement('div');
+      el.className = 'fighter';
+      el.style.left = (f.x || 150) + 'px';
+      el.style.top  = (f.y || 250) + 'px';
+      el.innerHTML = boxerSVG({shorts:f.color, gloves:f.color});
 
-      let avatar = document.createElement("div");
-      avatar.className = "avatar";
-      avatar.style.background = f.color;
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = f.name;
+      el.appendChild(label);
 
-      let name = document.createElement("div");
-      name.className = "name";
-      name.innerText = f.name;
+      ring.appendChild(el);
+      return el;
+    }
 
-      div.appendChild(avatar);
-      div.appendChild(name);
-      ring.appendChild(div);
-    });
+    // place initial demo fighters
+    const fighterEls = demoFighters.map(spawnFighter);
+
+    // simple movement: wander within the ring area
+    function wander(el){
+      const r = ringRect();
+      const maxX = r.width - 120;
+      const maxY = r.height - 180;
+      const nx = Math.max(20, Math.min(maxX, (parseInt(el.style.left)||0) + (Math.random()*120-60)));
+      const ny = Math.max(60, Math.min(maxY, (parseInt(el.style.top)||0) + (Math.random()*80-40)));
+      el.style.transition = 'transform .8s ease, left .8s ease, top .8s ease';
+      el.style.left = nx + 'px';
+      el.style.top  = ny + 'px';
+    }
+    setInterval(()=> fighterEls.forEach(wander), 1600);
+
+    // spar: pick two closest and play punch animation
+    function spar(){
+      if (fighterEls.length < 2) return;
+      // find two random fighters
+      const i = Math.floor(Math.random()*fighterEls.length);
+      let j = Math.floor(Math.random()*fighterEls.length);
+      if (j===i) j = (j+1)%fighterEls.length;
+      const a = fighterEls[i], b = fighterEls[j];
+      // move closer
+      const ax = parseInt(a.style.left), ay = parseInt(a.style.top);
+      const bx = parseInt(b.style.left), by = parseInt(b.style.top);
+      const midx = (ax+bx)/2;
+      const midy = (ay+by)/2;
+      a.style.left = (midx-70) + 'px';
+      b.style.left = (midx+10) + 'px';
+      a.style.top  = (midy) + 'px';
+      b.style.top  = (midy) + 'px';
+      // punch effect
+      a.classList.add('punch');
+      b.classList.add('punch');
+      setTimeout(()=>{ a.classList.remove('punch'); b.classList.remove('punch'); }, 380);
+    }
+
+    // controls
+    document.getElementById('spar').onclick = spar;
+    document.getElementById('spawn').onclick = ()=>{
+      const idx = fighterEls.length+1;
+      const nf = spawnFighter({
+        name:`Wallet${idx}...${Math.random().toString(36).slice(2,5)}`,
+        color: ['#e11','#15f','#1a3','#fb0','#a0f','#0af'][idx%6],
+        x: 120 + Math.random()* (ringRect().width-240),
+        y: 200 + Math.random()* 120
+      });
+      fighterEls.push(nf);
+    };
+
+    // Resize safety
+    window.addEventListener('resize', ()=> fighterEls.forEach(wander));
   </script>
 </body>
 </html>
